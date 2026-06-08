@@ -3,12 +3,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.api import accounts, projects, messages, proposals, jobs, dashboard
+from app.worker.scheduler import start_scheduler, stop_scheduler
+from app.worker.pool import close_browser
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    start_scheduler()
     yield
+    stop_scheduler()
+    await close_browser()
 
 
 app = FastAPI(title="Freelas Automation", lifespan=lifespan)

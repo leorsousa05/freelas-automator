@@ -63,10 +63,18 @@ def delete_account(id: UUID, db: Session = Depends(get_db)):
     return {"ok": True}
 
 
+import asyncio
+from app.worker.scraper import run_full_sync
+
 @router.post("/{id}/sync")
 def sync_account(id: UUID, db: Session = Depends(get_db)):
     account = db.query(Account).filter(Account.id == id).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
-    # TODO: trigger sync via scheduler in Task 12
+    asyncio.create_task(run_full_sync(
+        str(account.id),
+        account.username,
+        account.password_encrypted,
+        account.session_cookies,
+    ))
     return {"status": "queued", "account_id": str(id)}

@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: freelas
+      POSTGRES_PASSWORD: freelas
+      POSTGRES_DB: freelas
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  api:
+    build: ./backend
+    environment:
+      - DATABASE_URL=postgresql://freelas:freelas@db:5432/freelas
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - TWOCAPTCHA_API_KEY=${TWOCAPTCHA_API_KEY}
+    depends_on:
+      - db
+    volumes:
+      - ./backend/app:/app/app
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./frontend/dist:/usr/share/nginx/html
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
