@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Accounts from './pages/Accounts'
 import Projects from './pages/Projects'
 import Messages from './pages/Messages'
+import Proposals from './pages/Proposals'
 
 function App() {
   return (
@@ -15,7 +16,7 @@ function App() {
           <Route path="/accounts" element={<Accounts />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/messages" element={<Messages />} />
-          <Route path="/proposals" element={<div className="text-2xl font-bold">Proposals</div>} />
+          <Route path="/proposals" element={<Proposals />} />
           <Route path="/jobs" element={<div className="text-2xl font-bold">Jobs</div>} />
         </Routes>
       </main>
