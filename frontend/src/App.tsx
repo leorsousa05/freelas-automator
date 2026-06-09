@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
 import Accounts from './pages/Accounts'
 import Projects from './pages/Projects'
+import Messages from './pages/Messages'
 
 function App() {
   return (
@@ -13,7 +14,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/accounts" element={<Accounts />} />
           <Route path="/projects" element={<Projects />} />
-          <Route path="/messages" element={<div className="text-2xl font-bold">Messages</div>} />
+          <Route path="/messages" element={<Messages />} />
           <Route path="/proposals" element={<div className="text-2xl font-bold">Proposals</div>} />
           <Route path="/jobs" element={<div className="text-2xl font-bold">Jobs</div>} />
         </Routes>
