@@ -5,15 +5,15 @@ from app.config import settings
 TWOCAPTCHA_API = "http://2captcha.com"
 
 
-async def solve_recaptcha(site_key: str, page_url: str, timeout: int = 60) -> str | None:
+async def solve_turnstile(site_key: str, page_url: str, timeout: int = 60) -> str | None:
+    """Solve Cloudflare Turnstile via 2captcha."""
     async with httpx.AsyncClient() as client:
-        # Request captcha solve
         resp = await client.post(
             f"{TWOCAPTCHA_API}/in.php",
             data={
                 "key": settings.twocaptcha_api_key,
-                "method": "userrecaptcha",
-                "googlekey": site_key,
+                "method": "turnstile",
+                "sitekey": site_key,
                 "pageurl": page_url,
                 "json": 1,
             },
@@ -23,7 +23,6 @@ async def solve_recaptcha(site_key: str, page_url: str, timeout: int = 60) -> st
             return None
         captcha_id = data["request"]
 
-        # Poll for result
         for _ in range(timeout):
             await asyncio.sleep(5)
             result = await client.get(

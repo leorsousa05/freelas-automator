@@ -6,10 +6,13 @@ from playwright.async_api import Page
 from app.database import SessionLocal
 from app.models import Account, Project, Message, Proposal, ScrapingJob
 from app.worker.pool import get_context, close_context
-from app.worker.captcha import solve_recaptcha
+from app.worker.captcha import solve_turnstile
 from app.encryption import decrypt
 
 LOGIN_URL = "https://www.99freelas.com.br/login"
+
+
+TURNSTILE_SITE_KEY = "0x4AAAAAAA9Utah2iZE4n8u6"
 
 
 async def ensure_logged_in(account_id: str, username: str, encrypted_password: str, cookies_json: str | None):
@@ -30,22 +33,24 @@ async def ensure_logged_in(account_id: str, username: str, encrypted_password: s
 
     # Need to login
     await page.goto(LOGIN_URL)
-    await page.fill('input[name="username"]', username)
-    await page.fill('input[name="password"]', decrypt(encrypted_password))
+    await page.wait_for_load_state("networkidle")
 
-    # Check for captcha
+    await page.fill('#email', username)
+    await page.fill('#senha', decrypt(encrypted_password))
+
+    # Check for Cloudflare Turnstile captcha
     try:
-        captcha_frame = page.locator('iframe[title="reCAPTCHA"]').first
-        if await captcha_frame.is_visible(timeout=5000):
-            # Extract sitekey from iframe src if possible
-            # For now, use placeholder — real sitekey must be inspected on live site
-            token = await solve_recaptcha("SITE_KEY_PLACEHOLDER", LOGIN_URL)
+        turnstile = page.locator('.cf-turnstile').first
+        if await turnstile.is_visible(timeout=5000):
+            token = await solve_turnstile(TURNSTILE_SITE_KEY, LOGIN_URL)
             if token:
-                await page.evaluate(f'document.getElementById("g-recaptcha-response").innerHTML="{token}"')
+                await page.evaluate(
+                    f'document.querySelector(\'input[name="cf-turnstile-response"]\').value = "{token}"'
+                )
     except Exception:
         pass  # No captcha or timeout
 
-    await page.click('button[type="submit"]')
+    await page.click('#btnEfetuarLogin')
     await page.wait_for_load_state("networkidle")
 
     if "login" in page.url:
