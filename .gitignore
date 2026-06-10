@@ -55,3 +55,15 @@ alembic/versions/
 
 # Docker volumes
 pgdata/
+
+# Screenshots
+*.png
+
+# Project docs / specs (internal)
+specs/
+AGENTS.md
+RUN.md
+
+# AI tool internal
+.superpowers/
+
