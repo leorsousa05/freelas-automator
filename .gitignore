@@ -5,17 +5,53 @@ __pycache__/
 *.so
 .venv/
 venv/
+ENV/
+env/
+*.egg-info/
+dist/
+build/
 
-# Node
+# Node.js
+node_modules/
 frontend/node_modules/
 frontend/dist/
+dist-ssr/
+*.local
 
-# IDE
+# IDEs
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
 # OS
 .DS_Store
+Thumbs.db
 
-# Env
+# Environment files
 .env
+.env.local
+.env.*.local
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+test.db
+dev.db
+freelas.db
+
+# Playwright
+.playwright-mcp/
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Alembic
+alembic/versions/
+
+# Docker volumes
+pgdata/

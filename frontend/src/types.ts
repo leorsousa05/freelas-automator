@@ -17,9 +17,39 @@ export interface Project {
   deadline: string | null
   url: string | null
   category: string | null
+  subcategory: string | null
   skills: string[]
   scraped_at: string
+  cached_at: string | null
   is_new: boolean
+  experience_level: string | null
+  proposals_count: number | null
+  interested_count: number | null
+  client_name: string | null
+  client_avatar: string | null
+  client_rating: number | null
+  client_last_seen: string | null
+  visibility: string | null
+  published_at: string | null
+  is_featured: boolean
+  allows_multiple_freelancers: boolean
+}
+
+export interface ProposalItem {
+  freelancer_name: string
+  freelancer_nickname: string
+  freelancer_avatar: string | null
+  freelancer_rating: number | null
+  is_premium: boolean
+  is_pro: boolean
+  is_identity_verified: boolean
+  status: string
+  status_badges: string[]
+  submitted_at: string | null
+  offer_value: number | null
+  final_value: number | null
+  duration_days: number | null
+  info: string
 }
 
 export interface Message {
@@ -29,6 +59,39 @@ export interface Message {
   sender_type: string
   content: string | null
   received_at: string | null
+  is_read: boolean
+}
+
+export interface Conversation {
+  id: string
+  account_id: string
+  external_id: string
+  client_name: string | null
+  client_photo_url: string | null
+  client_verified: boolean
+  project_id: string | null
+  project_name: string | null
+  last_message_snippet: string | null
+  last_message_at: string | null
+  has_files: boolean
+  is_deleted: boolean
+  is_system: boolean
+  is_admin: boolean
+  unread: boolean
+  scraped_at: string
+}
+
+export interface ConversationMessage {
+  id: string
+  conversation_id: string
+  external_id: string
+  sender_name: string | null
+  sender_photo_url: string | null
+  sender_type: string
+  content: string | null
+  has_files: boolean
+  sent_at: string | null
+  sent_by_me: boolean
   is_read: boolean
 }
 

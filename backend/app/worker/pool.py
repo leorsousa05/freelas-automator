@@ -1,9 +1,13 @@
 from playwright.async_api import async_playwright, Browser, BrowserContext
+from datetime import datetime, timedelta
 from app.config import settings
 
 _browser: Browser | None = None
 _contexts: dict[str, BrowserContext] = {}
+_login_at: dict[str, datetime] = {}
 _playwright = None
+
+LOGIN_CACHE_MINUTES = 30
 
 
 async def get_browser() -> Browser:
@@ -33,10 +37,22 @@ async def get_context(account_id: str) -> BrowserContext:
     return context
 
 
+def is_login_fresh(account_id: str) -> bool:
+    if account_id not in _login_at:
+        return False
+    return datetime.utcnow() - _login_at[account_id] < timedelta(minutes=LOGIN_CACHE_MINUTES)
+
+
+def mark_login(account_id: str):
+    _login_at[account_id] = datetime.utcnow()
+
+
 async def close_context(account_id: str):
     if account_id in _contexts:
         await _contexts[account_id].close()
         del _contexts[account_id]
+    if account_id in _login_at:
+        del _login_at[account_id]
 
 
 async def close_browser():

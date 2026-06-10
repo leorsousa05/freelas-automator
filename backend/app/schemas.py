@@ -37,8 +37,21 @@ class ProjectOut(BaseModel):
     deadline: Optional[datetime]
     url: Optional[str]
     category: Optional[str]
+    subcategory: Optional[str]
     skills: List[str]
+    experience_level: Optional[str]
+    proposals_count: Optional[int]
+    interested_count: Optional[int]
+    client_name: Optional[str]
+    client_avatar: Optional[str]
+    client_rating: Optional[Decimal]
+    client_last_seen: Optional[str]
+    visibility: Optional[str]
+    published_at: Optional[str]
+    is_featured: bool
+    allows_multiple_freelancers: bool
     scraped_at: datetime
+    cached_at: Optional[datetime]
     is_new: bool
 
 
@@ -53,16 +66,61 @@ class MessageOut(BaseModel):
     is_read: bool
 
 
+class ConversationMessageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    conversation_id: UUID
+    external_id: str
+    sender_name: Optional[str]
+    sender_photo_url: Optional[str]
+    sender_type: str
+    content: Optional[str]
+    has_files: bool
+    sent_at: Optional[datetime]
+    sent_by_me: bool
+    is_read: bool
+
+
+class ConversationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    account_id: UUID
+    external_id: str
+    client_name: Optional[str]
+    client_photo_url: Optional[str]
+    client_verified: bool
+    project_id: Optional[str]
+    project_name: Optional[str]
+    last_message_snippet: Optional[str]
+    last_message_at: Optional[datetime]
+    has_files: bool
+    is_deleted: bool
+    is_system: bool
+    is_admin: bool
+    unread: bool
+    scraped_at: datetime
+
+
 class ProposalOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     account_id: UUID
     project_id: Optional[UUID]
     external_id: str
+    freelancer_name: Optional[str]
+    freelancer_nickname: Optional[str]
+    freelancer_avatar: Optional[str]
+    freelancer_rating: Optional[Decimal]
+    is_premium: bool
+    is_pro: bool
+    is_identity_verified: bool
     value: Optional[Decimal]
+    final_value: Optional[Decimal]
     delivery_time_days: Optional[int]
     message: Optional[str]
     status: str
+    status_badges: List[str]
+    submitted_at: Optional[str]
     sent_at: Optional[datetime]
 
 
@@ -76,6 +134,18 @@ class ScrapingJobOut(BaseModel):
     finished_at: Optional[datetime]
     error_message: Optional[str]
     items_scraped: int
+
+
+class SendMessageRequest(BaseModel):
+    text: str
+
+
+class SendMessageResponse(BaseModel):
+    success: bool
+    conversation_id: UUID
+    external_id: str
+    text: str
+    sent_at: datetime
 
 
 class DashboardStats(BaseModel):

@@ -22,6 +22,12 @@ def test_project_out_serialization():
         "skills": [],
         "scraped_at": "2026-06-08T10:00:00",
         "is_new": True,
+        "subcategory": None,
+        "experience_level": None,
+        "proposals_count": None,
+        "interested_count": None,
+        "client_name": None,
+        "cached_at": None,
     }
     p = ProjectOut.model_validate(data)
     assert p.title == "Test"

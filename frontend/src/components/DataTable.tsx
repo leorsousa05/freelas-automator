@@ -10,9 +10,10 @@ interface DataTableProps<T> {
   columns: Column<T>[]
   rows: T[]
   keyExtractor: (row: T) => string
+  onRowClick?: (row: T) => void
 }
 
-export default function DataTable<T>({ columns, rows, keyExtractor }: DataTableProps<T>) {
+export default function DataTable<T>({ columns, rows, keyExtractor, onRowClick }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
@@ -52,7 +53,11 @@ export default function DataTable<T>({ columns, rows, keyExtractor }: DataTableP
         </thead>
         <tbody>
           {sorted.map((row) => (
-            <tr key={keyExtractor(row)} className="border-b hover:bg-gray-50">
+            <tr
+              key={keyExtractor(row)}
+              className={`border-b hover:bg-gray-50 ${onRowClick ? 'cursor-pointer' : ''}`}
+              onClick={() => onRowClick?.(row)}
+            >
               {columns.map((c) => (
                 <td key={c.key} className="px-4 py-3">
                   {c.render ? c.render(row) : (row as any)[c.key]}
