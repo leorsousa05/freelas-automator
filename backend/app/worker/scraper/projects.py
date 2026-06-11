@@ -51,20 +51,59 @@ async def scrape_projects(page, category_slug: str | None = None, page_num: int 
 
         client_el = item.select_one("p.client")
         client_text = ""
+        client_rating = None
+        client_reviews_count = None
         if client_el:
-            client_link = client_el.select_one("a")
+            # Clone the element so we can remove rating spans without affecting the soup
+            from copy import deepcopy
+            client_clone = deepcopy(client_el)
+            for star in client_clone.select("span.avaliacoes-star"):
+                star.decompose()
+            for text_span in client_clone.select("span.avaliacoes-text"):
+                text_span.decompose()
+
+            client_link = client_clone.select_one("a")
             if client_link:
                 client_text = client_link.get_text(strip=True)
             else:
-                full_text = client_el.get_text(strip=True).replace("Cliente:", "").strip()
-                full_text = re.sub(r'\(?\d+\s+avaliações?\)?', '', full_text)
+                full_text = client_clone.get_text(strip=True).replace("Cliente:", "").strip()
                 full_text = re.sub(r'\(Sem feedback\)', '', full_text)
                 client_text = full_text.strip()
+
+            # rating from original element
+            star_el = client_el.select_one("span.avaliacoes-star")
+            if star_el and star_el.has_attr("data-score"):
+                try:
+                    client_rating = Decimal(star_el["data-score"])
+                except Exception:
+                    pass
+            # reviews count from original element text
+            reviews_match = re.search(r'\((\d+)\s+avalia(?:ção|ções)\)', client_el.get_text(strip=True))
+            if reviews_match:
+                try:
+                    client_reviews_count = int(reviews_match.group(1))
+                except Exception:
+                    pass
 
         skills = []
         hab_el = item.select_one("p.habilidades")
         if hab_el:
             skills = [a.get_text(strip=True) for a in hab_el.select("a.habilidade")]
+
+        # flags
+        is_exclusive = bool(item.select_one("img[alt='Projeto exclusivo']") or item.select_one("img[title^='Projeto Exclusivo']"))
+        is_urgent = bool(item.select_one("img[alt='Projeto urgente']") or item.select_one("img[title^='Projeto Urgente']"))
+
+        # deadline from time-remaining element
+        deadline = None
+        time_remaining = info.get("time_remaining", "")
+        tr_el = item.select_one("b.datetime-restante")
+        if tr_el and tr_el.has_attr("cp-datetime"):
+            try:
+                ts_ms = int(tr_el["cp-datetime"])
+                deadline = datetime.utcfromtimestamp(ts_ms / 1000)
+            except (ValueError, OverflowError):
+                pass
 
         projects.append({
             "external_id": external_id,
@@ -72,11 +111,20 @@ async def scrape_projects(page, category_slug: str | None = None, page_num: int 
             "description": description,
             "url": url,
             "category": info["category"],
+            "subcategory": info["category"],
             "experience_level": info["experience_level"],
             "proposals_count": info["proposals_count"],
             "interested_count": info["interested_count"],
+            "published_at": info["published_at"],
+            "time_remaining": time_remaining,
             "client_name": client_text,
+            "client_rating": client_rating,
+            "client_reviews_count": client_reviews_count,
             "skills": skills,
+            "is_featured": bool(item.select_one("img[alt='Projeto destaque']") or item.select_one("img[title='Projeto em Destaque']")),
+            "is_exclusive": is_exclusive,
+            "is_urgent": is_urgent,
+            "deadline": deadline,
         })
     logger.info("[SCRAPE-LIST] Parsed %d projects", len(projects))
     return projects

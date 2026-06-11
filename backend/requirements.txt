@@ -11,6 +11,8 @@ alembic==1.13.1
 # Config / Security
 pydantic-settings==2.3.4
 cryptography==42.0.8
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
 
 # Automation
 playwright==1.44.0

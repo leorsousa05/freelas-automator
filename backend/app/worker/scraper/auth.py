@@ -1,7 +1,7 @@
 import json
 import asyncio
 import logging
-from app.worker.pool import get_context, mark_login, is_login_fresh
+from app.worker.pool import get_context, mark_login, is_login_fresh, get_login_lock
 from app.worker.captcha import solve_turnstile
 from app.encryption import decrypt
 from .constants import LOGIN_URL, TURNSTILE_SITE_KEY
@@ -19,6 +19,18 @@ async def ensure_logged_in(
 
     Returns (page, cookies_json) where cookies_json is the updated session cookies.
     """
+    lock = get_login_lock(account_id)
+    async with lock:
+        return await _do_login(account_id, username, encrypted_password, cookies_json)
+
+
+async def _do_login(
+    account_id: str,
+    username: str,
+    encrypted_password: str,
+    cookies_json: str | None,
+) -> tuple:
+    """Internal login logic (must be called inside the account lock)."""
     logger.info("[LOGIN] Starting ensure_logged_in for account=%s user=%s", account_id, username)
     context = await get_context(account_id)
     page = await context.new_page()

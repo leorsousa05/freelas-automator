@@ -2,9 +2,11 @@ from .constants import LOGIN_URL, BASE_URL, TURNSTILE_SITE_KEY, CATEGORIES
 from .auth import ensure_logged_in
 from .parsers import parse_info_text, parse_budget, parse_brl
 from .projects import scrape_projects, scrape_project_detail, scrape_project_full
-from .proposals import scrape_project_proposals
+from .proposals import scrape_project_proposals, send_proposal
 from .messages import scrape_conversations, scrape_conversation_messages
 from .my_proposals import scrape_my_proposals
+from .subscription import scrape_subscription_status
+from .test_login import test_credentials
 from .helpers import with_authenticated_page
 from .sync import run_full_sync
 
@@ -22,8 +24,10 @@ __all__ = [
     "scrape_project_full",
     "with_authenticated_page",
     "scrape_project_proposals",
+    "send_proposal",
     "scrape_conversations",
     "scrape_conversation_messages",
     "scrape_my_proposals",
+    "scrape_subscription_status",
     "run_full_sync",
 ]

@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Account, ScrapingJob
-from app.schemas import AccountCreate, AccountUpdate, AccountOut
+from app.schemas import AccountCreate, AccountUpdate, AccountOut, SubscriptionStatus
 from app.encryption import encrypt, decrypt
-from app.worker.scraper import run_full_sync, scrape_projects, CATEGORIES
+from app.worker.scraper import run_full_sync, scrape_projects, scrape_subscription_status, test_credentials, CATEGORIES
 from app.worker.scraper.helpers import with_authenticated_page
 
 router = APIRouter()
@@ -20,10 +20,14 @@ def list_accounts(db: Session = Depends(get_db)):
 
 @router.post("", response_model=AccountOut)
 def create_account(data: AccountCreate, db: Session = Depends(get_db)):
-    existing = db.query(Account).filter(Account.username == data.username).first()
+    existing = db.query(Account).filter(
+        Account.username == data.username,
+        Account.platform == data.platform,
+    ).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Username already exists")
+        raise HTTPException(status_code=400, detail="Conta já existe para essa plataforma")
     account = Account(
+        platform=data.platform,
         username=data.username,
         password_encrypted=encrypt(data.password),
     )
@@ -46,6 +50,8 @@ def update_account(id: UUID, data: AccountUpdate, db: Session = Depends(get_db))
     account = db.query(Account).filter(Account.id == id).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
+    if data.platform is not None:
+        account.platform = data.platform
     if data.username is not None:
         account.username = data.username
     if data.password is not None:
@@ -55,6 +61,12 @@ def update_account(id: UUID, data: AccountUpdate, db: Session = Depends(get_db))
     db.commit()
     db.refresh(account)
     return account
+
+
+@router.post("/test-login")
+async def test_account_login(data: AccountCreate):
+    result = await test_credentials(data.platform, data.username, encrypt(data.password))
+    return result
 
 
 @router.delete("/{id}")
@@ -117,3 +129,16 @@ async def get_account_projects(
 @router.get("/categories/available")
 def list_categories():
     return CATEGORIES
+
+
+@router.get("/{id}/subscription", response_model=SubscriptionStatus)
+async def get_account_subscription(id: UUID, db: Session = Depends(get_db)):
+    account = db.query(Account).filter(Account.id == id).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+    async with with_authenticated_page(id, db) as page_obj:
+        result = await scrape_subscription_status(page_obj)
+        return SubscriptionStatus(
+            has_subscription=result["has_subscription"],
+            plan_name=result.get("plan_name"),
+        )
