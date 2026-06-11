@@ -13,72 +13,75 @@ async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   accounts: {
-    list: () => fetchJSON<Account[]>(`${API}/accounts`),
+    list: (signal?: AbortSignal) => fetchJSON<Account[]>(`${API}/accounts`, { signal }),
     create: (data: { platform: string; username: string; password: string }) => fetchJSON<Account>(`${API}/accounts`, { method: 'POST', body: JSON.stringify(data) }),
     testLogin: (data: { platform: string; username: string; password: string }) => fetchJSON<{ success: boolean; message: string }>(`${API}/accounts/test-login`, { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: Partial<Account>) => fetchJSON<Account>(`${API}/accounts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     remove: (id: string) => fetchJSON<void>(`${API}/accounts/${id}`, { method: 'DELETE' }),
     sync: (id: string) => fetchJSON<{ status: string }>(`${API}/accounts/${id}/sync`, { method: 'POST' }),
-    categories: () => fetchJSON<Record<string, string>>(`${API}/accounts/categories/available`),
-    subscription: (id: string) => fetchJSON<SubscriptionStatus>(`${API}/accounts/${id}/subscription`),
-    projects: (id: string, category?: string, page?: number) => {
+    categories: (signal?: AbortSignal) => fetchJSON<Record<string, string>>(`${API}/accounts/categories/available`, { signal }),
+    subscription: (id: string, signal?: AbortSignal) => fetchJSON<SubscriptionStatus>(`${API}/accounts/${id}/subscription`, { signal }),
+    projects: (id: string, category?: string, page?: number, signal?: AbortSignal) => {
       const params = new URLSearchParams()
       if (category) params.set('category', category)
       if (page && page > 1) params.set('page', String(page))
       const qs = params.toString()
       return fetchJSON<{ account_id: string; category: string | null; page: number; count: number; projects: Project[] }>(
-        `${API}/accounts/${id}/projects${qs ? '?' + qs : ''}`
+        `${API}/accounts/${id}/projects${qs ? '?' + qs : ''}`,
+        { signal }
       )
     },
   },
   projects: {
-    list: (accountId?: string, category?: string) => {
+    list: (accountId?: string, category?: string, signal?: AbortSignal) => {
       const params = new URLSearchParams()
       if (accountId) params.set('account_id', accountId)
       if (category) params.set('category', category)
       const qs = params.toString()
-      return fetchJSON<Project[]>(`${API}/projects${qs ? '?' + qs : ''}`)
+      return fetchJSON<Project[]>(`${API}/projects${qs ? '?' + qs : ''}`, { signal })
     },
-    scrape: (accountId: string, category?: string, page?: number) => {
+    scrape: (accountId: string, category?: string, page?: number, signal?: AbortSignal) => {
       const params = new URLSearchParams()
       params.set('account_id', accountId)
       if (category) params.set('category', category)
       if (page && page > 1) params.set('page', String(page))
       return fetchJSON<{ account_id: string; category: string | null; page: number; count: number; projects: Project[] }>(
         `${API}/projects/scrape?${params.toString()}`,
-        { method: 'POST' }
+        { method: 'POST', signal }
       )
     },
-    get: (externalId: string) => fetchJSON<Project>(`${API}/projects/${externalId}`),
-    detail: (externalId: string, accountId: string) =>
-      fetchJSON<Project>(`${API}/projects/${externalId}/detail?account_id=${accountId}`),
-    full: (externalId: string, accountId: string) =>
+    get: (externalId: string, signal?: AbortSignal) => fetchJSON<Project>(`${API}/projects/${externalId}`, { signal }),
+    detail: (externalId: string, accountId: string, signal?: AbortSignal) =>
+      fetchJSON<Project>(`${API}/projects/${externalId}/detail?account_id=${accountId}`, { signal }),
+    full: (externalId: string, accountId: string, signal?: AbortSignal) =>
       fetchJSON<{ detail: Project; proposals: ProposalItem[] }>(
-        `${API}/projects/${externalId}/full?account_id=${accountId}`
+        `${API}/projects/${externalId}/full?account_id=${accountId}`,
+        { signal }
       ),
-    proposals: (externalId: string, accountId: string) =>
+    proposals: (externalId: string, accountId: string, signal?: AbortSignal) =>
       fetchJSON<{ external_id: string; count: number; proposals: ProposalItem[] }>(
-        `${API}/projects/${externalId}/proposals?account_id=${accountId}`
+        `${API}/projects/${externalId}/proposals?account_id=${accountId}`,
+        { signal }
       ),
-    isStale: (externalId: string) =>
-      fetchJSON<{ stale: boolean; minutes_ago: number | null }>(`${API}/projects/${externalId}/is-stale`),
+    isStale: (externalId: string, signal?: AbortSignal) =>
+      fetchJSON<{ stale: boolean; minutes_ago: number | null }>(`${API}/projects/${externalId}/is-stale`, { signal }),
     sendProposal: (externalId: string, data: { account_id: string; offer_value: string; final_value: string; duration_days: number; details: string }) =>
       fetchJSON<SendProposalResponse>(`${API}/projects/${externalId}/send-proposal`, { method: 'POST', body: JSON.stringify(data) }),
   },
   messages: {
-    list: (params?: string) => fetchJSON<Message[]>(`${API}/messages?${params || ''}`),
+    list: (params?: string, signal?: AbortSignal) => fetchJSON<Message[]>(`${API}/messages?${params || ''}`, { signal }),
     markRead: (id: string) => fetchJSON<void>(`${API}/messages/${id}/read`, { method: 'PATCH' }),
   },
   conversations: {
-    list: (accountId?: string, unreadOnly?: boolean) => {
+    list: (accountId?: string, unreadOnly?: boolean, signal?: AbortSignal) => {
       const params = new URLSearchParams()
       if (accountId) params.set('account_id', accountId)
       if (unreadOnly) params.set('unread_only', 'true')
       const qs = params.toString()
-      return fetchJSON<Conversation[]>(`${API}/conversations${qs ? '?' + qs : ''}`)
+      return fetchJSON<Conversation[]>(`${API}/conversations${qs ? '?' + qs : ''}`, { signal })
     },
-    get: (id: string) => fetchJSON<Conversation>(`${API}/conversations/${id}`),
-    messages: (id: string) => fetchJSON<ConversationMessage[]>(`${API}/conversations/${id}/messages`),
+    get: (id: string, signal?: AbortSignal) => fetchJSON<Conversation>(`${API}/conversations/${id}`, { signal }),
+    messages: (id: string, signal?: AbortSignal) => fetchJSON<ConversationMessage[]>(`${API}/conversations/${id}/messages`, { signal }),
     sync: (accountId: string) =>
       fetchJSON<{ account_id: string; synced_count: number; conversations: Conversation[] }>(
         `${API}/conversations/sync?account_id=${accountId}`,
@@ -96,12 +99,12 @@ export const api = {
       ),
   },
   proposals: {
-    list: (params?: string) => fetchJSON<Proposal[]>(`${API}/proposals?${params || ''}`),
+    list: (params?: string, signal?: AbortSignal) => fetchJSON<Proposal[]>(`${API}/proposals?${params || ''}`, { signal }),
   },
   jobs: {
-    list: () => fetchJSON<ScrapingJob[]>(`${API}/jobs`),
+    list: (signal?: AbortSignal) => fetchJSON<ScrapingJob[]>(`${API}/jobs`, { signal }),
   },
   dashboard: {
-    stats: () => fetchJSON<DashboardStats>(`${API}/dashboard/stats`),
+    stats: (signal?: AbortSignal) => fetchJSON<DashboardStats>(`${API}/dashboard/stats`, { signal }),
   },
 }

@@ -1,4 +1,4 @@
-import { useFetch } from '../hooks/useFetch'
+import { useQuery } from '@tanstack/react-query'
 import { api } from '../api'
 import DataTable from '../components/DataTable'
 import StatusBadge from '../components/StatusBadge'
@@ -6,9 +6,12 @@ import Skeleton from '../components/ui/Skeleton'
 import Card from '../components/ui/Card'
 
 export default function Proposals() {
-  const { data: proposals, loading } = useFetch(api.proposals.list)
+  const { data: proposals, isLoading } = useQuery({
+    queryKey: ['proposals'],
+    queryFn: ({ signal }) => api.proposals.list(undefined, signal),
+  })
 
-  if (loading) return <Skeleton />
+  if (isLoading) return <Skeleton />
 
   return (
     <div>
@@ -19,19 +22,19 @@ export default function Proposals() {
             rows={proposals}
             keyExtractor={(p) => p.id}
             columns={[
-              { key: 'external_id', header: 'ID' },
+              { id: 'external_id', header: 'ID' },
               {
-                key: 'value',
+                id: 'value',
                 header: 'Valor',
-                render: (p) => (p.value ? `R$ ${p.value}` : '-'),
+                accessor: (p) => (p.value ? `R$ ${p.value}` : '-'),
               },
               {
-                key: 'delivery_time_days',
+                id: 'delivery_time_days',
                 header: 'Prazo',
-                render: (p) => (p.delivery_time_days ? `${p.delivery_time_days} dias` : '-'),
+                accessor: (p) => (p.delivery_time_days ? `${p.delivery_time_days} dias` : '-'),
               },
-              { key: 'status', header: 'Status', render: (p) => <StatusBadge status={p.status} /> },
-              { key: 'sent_at', header: 'Enviada em' },
+              { id: 'status', header: 'Status', render: (p) => <StatusBadge status={p.status} /> },
+              { id: 'sent_at', header: 'Enviada em' },
             ]}
           />
         </Card>

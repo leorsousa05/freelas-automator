@@ -1,4 +1,4 @@
-import { useFetch } from '../hooks/useFetch'
+import { useQuery } from '@tanstack/react-query'
 import { api } from '../api'
 import DataTable from '../components/DataTable'
 import StatusBadge from '../components/StatusBadge'
@@ -6,9 +6,12 @@ import Skeleton from '../components/ui/Skeleton'
 import Card from '../components/ui/Card'
 
 export default function Jobs() {
-  const { data: jobs, loading } = useFetch(api.jobs.list)
+  const { data: jobs, isLoading } = useQuery({
+    queryKey: ['jobs'],
+    queryFn: ({ signal }) => api.jobs.list(signal),
+  })
 
-  if (loading) return <Skeleton />
+  if (isLoading) return <Skeleton />
 
   return (
     <div>
@@ -19,17 +22,15 @@ export default function Jobs() {
             rows={jobs}
             keyExtractor={(j) => j.id}
             columns={[
-              { key: 'job_type', header: 'Tipo' },
-              { key: 'status', header: 'Status', render: (j) => <StatusBadge status={j.status} /> },
-              { key: 'started_at', header: 'Início' },
-              { key: 'finished_at', header: 'Fim' },
-              { key: 'items_scraped', header: 'Itens' },
+              { id: 'job_type', header: 'Tipo' },
+              { id: 'status', header: 'Status', render: (j) => <StatusBadge status={j.status} /> },
+              { id: 'started_at', header: 'Início' },
+              { id: 'finished_at', header: 'Fim' },
+              { id: 'items_scraped', header: 'Itens' },
               {
-                key: 'error',
+                id: 'error',
                 header: 'Erro',
-                render: (j) => (
-                  <span className="text-rose-500 text-xs line-clamp-2">{j.error_message}</span>
-                ),
+                render: (j) => <span className="text-rose-500 text-xs line-clamp-2">{j.error_message}</span>,
               },
             ]}
           />

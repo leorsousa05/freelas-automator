@@ -1,13 +1,16 @@
-import { useFetch } from '../hooks/useFetch'
+import { useQuery } from '@tanstack/react-query'
 import { api } from '../api'
 import Card from '../components/ui/Card'
 import Skeleton from '../components/ui/Skeleton'
 import { FolderOpen, MessageSquare, Send, Users } from 'lucide-react'
 
 export default function Dashboard() {
-  const { data: stats, loading } = useFetch(api.dashboard.stats)
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: ({ signal }) => api.dashboard.stats(signal),
+  })
 
-  if (loading) return <Skeleton count={4} />
+  if (isLoading) return <Skeleton count={4} />
   if (!stats) return <div className="text-rose-500">Erro ao carregar stats</div>
 
   const cards = [
@@ -54,9 +57,7 @@ export default function Dashboard() {
                   <Icon size={24} className={c.color} strokeWidth={1.5} />
                 </div>
                 <div>
-                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                    {c.label}
-                  </div>
+                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">{c.label}</div>
                   <div className={`text-3xl font-bold mt-0.5 ${c.color}`}>{c.value}</div>
                 </div>
               </div>
