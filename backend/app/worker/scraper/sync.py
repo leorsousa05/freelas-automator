@@ -56,6 +56,13 @@ async def run_full_sync(job_id: str, account_id: str, username: str, password_en
                 existing.proposals_count = p.get("proposals_count")
                 existing.interested_count = p.get("interested_count")
                 existing.client_name = p.get("client_name")
+                existing.client_rating = p.get("client_rating")
+                existing.client_reviews_count = p.get("client_reviews_count")
+                existing.published_at = p.get("published_at")
+                existing.time_remaining = p.get("time_remaining")
+                existing.is_featured = p.get("is_featured", False)
+                existing.is_exclusive = p.get("is_exclusive", False)
+                existing.is_urgent = p.get("is_urgent", False)
                 existing.budget_min = p.get("budget_min")
                 existing.budget_max = p.get("budget_max")
                 existing.scraped_at = datetime.utcnow()
@@ -73,6 +80,13 @@ async def run_full_sync(job_id: str, account_id: str, username: str, password_en
                     proposals_count=p.get("proposals_count"),
                     interested_count=p.get("interested_count"),
                     client_name=p.get("client_name"),
+                    client_rating=p.get("client_rating"),
+                    client_reviews_count=p.get("client_reviews_count"),
+                    published_at=p.get("published_at"),
+                    time_remaining=p.get("time_remaining"),
+                    is_featured=p.get("is_featured", False),
+                    is_exclusive=p.get("is_exclusive", False),
+                    is_urgent=p.get("is_urgent", False),
                     budget_min=p.get("budget_min"),
                     budget_max=p.get("budget_max"),
                     scraped_at=datetime.utcnow(),

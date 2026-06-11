@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChevronUp, ChevronDown } from 'lucide-react'
 
 interface Column<T> {
   key: string
@@ -36,17 +37,28 @@ export default function DataTable<T>({ columns, rows, keyExtractor, onRowClick }
   })
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto -mx-4 md:mx-0">
       <table className="min-w-full text-sm">
-        <thead className="bg-gray-100">
-          <tr>
+        <thead>
+          <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
             {columns.map((c) => (
               <th
                 key={c.key}
                 onClick={() => handleSort(c.key)}
-                className="px-4 py-2 text-left font-semibold text-gray-600 cursor-pointer select-none"
+                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 cursor-pointer select-none whitespace-nowrap"
               >
-                {c.header} {sortKey === c.key ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                <span className="inline-flex items-center gap-1">
+                  {c.header}
+                  {sortKey === c.key ? (
+                    sortDir === 'asc' ? (
+                      <ChevronUp size={14} />
+                    ) : (
+                      <ChevronDown size={14} />
+                    )
+                  ) : (
+                    <span className="inline-block w-[14px]" />
+                  )}
+                </span>
               </th>
             ))}
           </tr>
@@ -55,11 +67,15 @@ export default function DataTable<T>({ columns, rows, keyExtractor, onRowClick }
           {sorted.map((row) => (
             <tr
               key={keyExtractor(row)}
-              className={`border-b hover:bg-gray-50 ${onRowClick ? 'cursor-pointer' : ''}`}
+              className={`border-b border-slate-100 dark:border-slate-800/50 transition-colors ${
+                onRowClick
+                  ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                  : ''
+              }`}
               onClick={() => onRowClick?.(row)}
             >
               {columns.map((c) => (
-                <td key={c.key} className="px-4 py-3">
+                <td key={c.key} className="px-4 py-3.5 text-slate-700 dark:text-slate-300 whitespace-nowrap">
                   {c.render ? c.render(row) : (row as any)[c.key]}
                 </td>
               ))}

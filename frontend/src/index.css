@@ -2,6 +2,97 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-gray-100 text-gray-900;
+@layer base {
+  :root {
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #f8fafc;
+    --color-bg-tertiary: #f1f5f9;
+    --color-bg-elevated: #ffffff;
+    --color-bg-inset: #f1f5f9;
+
+    --color-surface-default: #ffffff;
+    --color-surface-hover: #f8fafc;
+    --color-surface-active: #f1f5f9;
+    --color-surface-elevated: #ffffff;
+
+    --color-border-default: #e2e8f0;
+    --color-border-subtle: #f1f5f9;
+    --color-border-strong: #cbd5e1;
+
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #475569;
+    --color-text-tertiary: #94a3b8;
+    --color-text-inverse: #f8fafc;
+
+    --color-accent-primary: #14b8a6;
+    --color-accent-hover: #0d9488;
+    --color-accent-subtle: #f0fdfa;
+    --color-accent-muted: #5eead4;
+
+    --color-success: #10b981;
+    --color-success-bg: #ecfdf5;
+    --color-warning: #f59e0b;
+    --color-warning-bg: #fffbeb;
+    --color-error: #ef4444;
+    --color-error-bg: #fff1f2;
+  }
+
+  .dark {
+    --color-bg-primary: #0f172a;
+    --color-bg-secondary: #1e293b;
+    --color-bg-tertiary: #334155;
+    --color-bg-elevated: #1e293b;
+    --color-bg-inset: #020617;
+
+    --color-surface-default: #1e293b;
+    --color-surface-hover: #334155;
+    --color-surface-active: #475569;
+    --color-surface-elevated: #1e293b;
+
+    --color-border-default: #334155;
+    --color-border-subtle: #1e293b;
+    --color-border-strong: #475569;
+
+    --color-text-primary: #f8fafc;
+    --color-text-secondary: #94a3b8;
+    --color-text-tertiary: #64748b;
+    --color-text-inverse: #0f172a;
+
+    --color-accent-primary: #2dd4bf;
+    --color-accent-hover: #5eead4;
+    --color-accent-subtle: #134e4a;
+    --color-accent-muted: #0f766e;
+
+    --color-success: #34d399;
+    --color-success-bg: #064e3b;
+    --color-warning: #fbbf24;
+    --color-warning-bg: #451a03;
+    --color-error: #f87171;
+    --color-error-bg: #450a0a;
+  }
+
+  html {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 0ms;
+  }
+
+  html.color-transition *,
+  html.color-transition *::before,
+  html.color-transition *::after {
+    transition-duration: 300ms;
+  }
 }

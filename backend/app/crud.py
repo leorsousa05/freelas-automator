@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 from sqlalchemy.orm import Session
-from app.models import Project, Conversation, ConversationMessage
+from app.models import Project, Conversation, ConversationMessage, Proposal
 
 
 def upsert_project_from_detail(
@@ -34,10 +34,14 @@ def upsert_project_from_detail(
         "client_name": detail.get("client_name"),
         "client_avatar": detail.get("client_avatar"),
         "client_rating": detail.get("client_rating"),
+        "client_reviews_count": detail.get("client_reviews_count"),
         "client_last_seen": detail.get("client_last_seen"),
         "visibility": detail.get("visibility"),
         "published_at": detail.get("published_at"),
+        "time_remaining": detail.get("time_remaining"),
         "is_featured": detail.get("is_featured", False),
+        "is_exclusive": detail.get("is_exclusive", False),
+        "is_urgent": detail.get("is_urgent", False),
         "allows_multiple_freelancers": detail.get("allows_multiple_freelancers", False),
         "deadline": detail.get("deadline"),
         "scraped_at": now,
@@ -139,3 +143,46 @@ def upsert_conversation_message(
     db.commit()
     db.refresh(msg)
     return msg
+
+
+def upsert_proposal_from_sent(
+    db: Session,
+    account_id: UUID,
+    external_id: str,
+    project_id: UUID | None,
+    value: str,
+    final_value: str,
+    duration_days: int,
+    message: str,
+) -> Proposal:
+    """Create or update a Proposal record after successfully sending a bid."""
+    proposal = db.query(Proposal).filter(
+        Proposal.external_id == external_id,
+        Proposal.account_id == account_id,
+    ).first()
+
+    now = datetime.utcnow()
+    fields = {
+        "project_id": project_id,
+        "value": value,
+        "final_value": final_value,
+        "delivery_time_days": duration_days,
+        "message": message,
+        "status": "sent",
+        "sent_at": now,
+    }
+
+    if proposal:
+        for key, val in fields.items():
+            setattr(proposal, key, val)
+    else:
+        proposal = Proposal(
+            account_id=account_id,
+            external_id=external_id,
+            **fields,
+        )
+        db.add(proposal)
+
+    db.commit()
+    db.refresh(proposal)
+    return proposal

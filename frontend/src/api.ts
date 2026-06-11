@@ -1,4 +1,4 @@
-import type { Account, Project, Message, Conversation, ConversationMessage, Proposal, ProposalItem, ScrapingJob, DashboardStats } from './types'
+import type { Account, Project, Message, Conversation, ConversationMessage, Proposal, ProposalItem, ScrapingJob, DashboardStats, SendProposalResponse, SubscriptionStatus } from './types'
 
 const API = '/api'
 
@@ -14,11 +14,13 @@ async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
 export const api = {
   accounts: {
     list: () => fetchJSON<Account[]>(`${API}/accounts`),
-    create: (data: { username: string; password: string }) => fetchJSON<Account>(`${API}/accounts`, { method: 'POST', body: JSON.stringify(data) }),
+    create: (data: { platform: string; username: string; password: string }) => fetchJSON<Account>(`${API}/accounts`, { method: 'POST', body: JSON.stringify(data) }),
+    testLogin: (data: { platform: string; username: string; password: string }) => fetchJSON<{ success: boolean; message: string }>(`${API}/accounts/test-login`, { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: Partial<Account>) => fetchJSON<Account>(`${API}/accounts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     remove: (id: string) => fetchJSON<void>(`${API}/accounts/${id}`, { method: 'DELETE' }),
     sync: (id: string) => fetchJSON<{ status: string }>(`${API}/accounts/${id}/sync`, { method: 'POST' }),
     categories: () => fetchJSON<Record<string, string>>(`${API}/accounts/categories/available`),
+    subscription: (id: string) => fetchJSON<SubscriptionStatus>(`${API}/accounts/${id}/subscription`),
     projects: (id: string, category?: string, page?: number) => {
       const params = new URLSearchParams()
       if (category) params.set('category', category)
@@ -60,6 +62,8 @@ export const api = {
       ),
     isStale: (externalId: string) =>
       fetchJSON<{ stale: boolean; minutes_ago: number | null }>(`${API}/projects/${externalId}/is-stale`),
+    sendProposal: (externalId: string, data: { account_id: string; offer_value: string; final_value: string; duration_days: number; details: string }) =>
+      fetchJSON<SendProposalResponse>(`${API}/projects/${externalId}/send-proposal`, { method: 'POST', body: JSON.stringify(data) }),
   },
   messages: {
     list: (params?: string) => fetchJSON<Message[]>(`${API}/messages?${params || ''}`),

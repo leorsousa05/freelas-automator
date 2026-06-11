@@ -1,5 +1,6 @@
 export interface Account {
   id: string
+  platform: string
   username: string
   is_active: boolean
   last_login_at: string | null
@@ -28,10 +29,14 @@ export interface Project {
   client_name: string | null
   client_avatar: string | null
   client_rating: number | null
+  client_reviews_count: number | null
   client_last_seen: string | null
   visibility: string | null
   published_at: string | null
+  time_remaining: string | null
   is_featured: boolean
+  is_exclusive: boolean
+  is_urgent: boolean
   allows_multiple_freelancers: boolean
 }
 
@@ -116,6 +121,25 @@ export interface ScrapingJob {
   finished_at: string | null
   error_message: string | null
   items_scraped: number
+}
+
+export interface SubscriptionStatus {
+  has_subscription: boolean
+  plan_name: string | null
+}
+
+export interface SendProposalRequest {
+  account_id: string
+  offer_value: string
+  final_value: string
+  duration_days: number
+  details: string
+}
+
+export interface SendProposalResponse {
+  success: boolean
+  proposal?: Proposal
+  error?: string
 }
 
 export interface DashboardStats {

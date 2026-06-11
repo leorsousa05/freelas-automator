@@ -5,13 +5,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Account, Project
-from app.schemas import ProjectOut
-from app.crud import upsert_project_from_detail
+from app.schemas import ProjectOut, SendProposalRequest, SendProposalResponse
+from app.crud import upsert_project_from_detail, upsert_proposal_from_sent
 from app.worker.scraper import (
     scrape_projects,
     scrape_project_detail,
     scrape_project_proposals,
     scrape_project_full,
+    send_proposal,
     CATEGORIES,
     BASE_URL,
 )
@@ -125,6 +126,7 @@ async def get_project_detail_live(
     async with with_authenticated_page(account_id, db) as page_obj:
         detail = await scrape_project_detail(page_obj, project_path)
         if detail:
+            detail["external_id"] = external_id
             upsert_project_from_detail(db, account_id, external_id, detail)
             logger.info("[API] GET /%s/detail done — title=%s", external_id, detail.get("title"))
             return detail
@@ -150,6 +152,7 @@ async def get_project_full(
         detail = result["detail"]
         proposals = result["proposals"]
         if detail:
+            detail["external_id"] = external_id
             upsert_project_from_detail(db, account_id, external_id, detail)
             logger.info("[API] GET /%s/full done — detail+%d proposals in one nav", external_id, len(proposals))
             return {"detail": detail, "proposals": proposals}
@@ -182,3 +185,54 @@ def is_project_stale(external_id: str, db: Session = Depends(get_db)):
         return {"stale": True, "minutes_ago": None}
     minutes_ago = (datetime.utcnow() - project.cached_at).total_seconds() / 60
     return {"stale": minutes_ago > CACHE_MINUTES, "minutes_ago": round(minutes_ago, 1)}
+
+
+@router.post("/{external_id}/send-proposal", response_model=SendProposalResponse)
+async def send_project_proposal(
+    external_id: str,
+    request: SendProposalRequest,
+    db: Session = Depends(get_db),
+):
+    logger.info("[API] POST /%s/send-proposal account=%s", external_id, request.account_id)
+
+    project = db.query(Project).filter(
+        Project.external_id == external_id,
+        Project.account_id == request.account_id,
+    ).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Extract slug from project URL
+    slug = external_id
+    if project.url:
+        path = project.url.replace(BASE_URL, "").replace("/project/", "").split("?")[0]
+        slug = path.replace(f"-{external_id}", "")
+
+    async with with_authenticated_page(request.account_id, db) as page_obj:
+        result = await send_proposal(
+            page_obj,
+            external_id=external_id,
+            slug=slug,
+            offer_value=request.offer_value,
+            final_value=request.final_value,
+            duration_days=request.duration_days,
+            details=request.details,
+        )
+
+        if not result["success"]:
+            logger.warning("[API] POST /%s/send-proposal failed: %s", external_id, result["message"])
+            return SendProposalResponse(success=False, error=result["message"])
+
+        # Upsert proposal to DB
+        proposal = upsert_proposal_from_sent(
+            db,
+            account_id=request.account_id,
+            external_id=external_id,
+            project_id=project.id,
+            value=request.offer_value,
+            final_value=request.final_value,
+            duration_days=request.duration_days,
+            message=request.details,
+        )
+        logger.info("[API] POST /%s/send-proposal success — proposal saved", external_id)
+        return SendProposalResponse(success=True, proposal=proposal)

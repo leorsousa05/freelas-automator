@@ -1,3 +1,4 @@
+import asyncio
 from playwright.async_api import async_playwright, Browser, BrowserContext
 from datetime import datetime, timedelta
 from app.config import settings
@@ -5,6 +6,7 @@ from app.config import settings
 _browser: Browser | None = None
 _contexts: dict[str, BrowserContext] = {}
 _login_at: dict[str, datetime] = {}
+_login_locks: dict[str, asyncio.Lock] = {}
 _playwright = None
 
 LOGIN_CACHE_MINUTES = 30
@@ -53,6 +55,14 @@ async def close_context(account_id: str):
         del _contexts[account_id]
     if account_id in _login_at:
         del _login_at[account_id]
+    if account_id in _login_locks:
+        del _login_locks[account_id]
+
+
+def get_login_lock(account_id: str) -> asyncio.Lock:
+    if account_id not in _login_locks:
+        _login_locks[account_id] = asyncio.Lock()
+    return _login_locks[account_id]
 
 
 async def close_browser():
