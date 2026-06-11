@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useFetch } from '../hooks/useFetch'
-import { useSync } from '../hooks/useSync'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useAccountStore } from '../stores/accountStore'
 import { api } from '../api'
 import Card from '../components/ui/Card'
 import Input from '../components/ui/Input'
@@ -24,12 +24,18 @@ function platformBadge(platform: string) {
 }
 
 export default function Accounts() {
-  const { data: accounts, loading, refetch } = useFetch(api.accounts.list)
-  const { sync, syncing } = useSync()
+  const queryClient = useQueryClient()
+  const { accounts } = useAccountStore()
 
   const [form, setForm] = useState({ platform: '99freelas', username: '', password: '' })
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
+
+  const { isLoading } = useQuery({
+    queryKey: ['accounts'],
+    queryFn: ({ signal }) => api.accounts.list(signal),
+    staleTime: 5 * 60 * 1000,
+  })
 
   const handleTest = async () => {
     if (!form.username || !form.password) return
@@ -50,16 +56,21 @@ export default function Accounts() {
     await api.accounts.create(form)
     setForm({ platform: '99freelas', username: '', password: '' })
     setTestResult(null)
-    refetch()
+    queryClient.invalidateQueries({ queryKey: ['accounts'] })
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm('Remover conta?')) return
     await api.accounts.remove(id)
-    refetch()
+    queryClient.invalidateQueries({ queryKey: ['accounts'] })
   }
 
-  if (loading) return <Skeleton />
+  const handleSync = async (id: string) => {
+    await api.accounts.sync(id)
+    queryClient.invalidateQueries({ queryKey: ['accounts'] })
+  }
+
+  if (isLoading && accounts.length === 0) return <Skeleton />
 
   return (
     <div>
@@ -78,9 +89,7 @@ export default function Accounts() {
               }}
             >
               {PLATFORMS.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
+                <option key={p.value} value={p.value}>{p.label}</option>
               ))}
             </Select>
             <Input
@@ -105,13 +114,7 @@ export default function Accounts() {
               required
             />
             <div className="flex items-end gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleTest}
-                disabled={testing || !form.username || !form.password}
-                isLoading={testing}
-              >
+              <Button type="button" variant="secondary" onClick={handleTest} disabled={testing || !form.username || !form.password} isLoading={testing}>
                 <Plug size={16} />
                 Testar login
               </Button>
@@ -119,13 +122,11 @@ export default function Accounts() {
             </div>
           </div>
           {testResult && (
-            <div
-              className={`p-3 rounded-lg text-sm font-medium border ${
-                testResult.success
-                  ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400'
-                  : 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400'
-              }`}
-            >
+            <div className={`p-3 rounded-lg text-sm font-medium border ${
+              testResult.success
+                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400'
+                : 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400'
+            }`}>
               {testResult.message}
             </div>
           )}
@@ -137,10 +138,7 @@ export default function Accounts() {
           {accounts.map((a) => {
             const pb = platformBadge(a.platform)
             return (
-              <Card
-                key={a.id}
-                className="flex flex-wrap items-center justify-between gap-4"
-              >
+              <Card key={a.id} className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <Badge variant="neutral">{pb.label}</Badge>
                   <div>
@@ -152,22 +150,11 @@ export default function Accounts() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => sync(a.id).then(refetch)}
-                    disabled={syncing === a.id}
-                    isLoading={syncing === a.id}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => handleSync(a.id)}>
                     <RefreshCw size={14} />
                     Sync
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(a.id)}
-                    className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(a.id)} className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20">
                     <Trash2 size={14} />
                   </Button>
                 </div>

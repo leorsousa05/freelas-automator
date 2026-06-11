@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 
 interface Column<T> {
-  key: string
+  id: string
   header: string
+  accessor?: (row: T) => unknown
   render?: (row: T) => React.ReactNode
+  sortable?: boolean
 }
 
 interface DataTableProps<T> {
@@ -27,14 +29,22 @@ export default function DataTable<T>({ columns, rows, keyExtractor, onRowClick }
     }
   }
 
-  const sorted = [...rows].sort((a: any, b: any) => {
+  const sorted = [...rows].sort((a: T, b: T) => {
     if (!sortKey) return 0
-    const av = a[sortKey] ?? ''
-    const bv = b[sortKey] ?? ''
+    const col = columns.find((c) => c.id === sortKey)
+    const accessor = col?.accessor ?? ((row: T) => (row as Record<string, unknown>)[sortKey])
+    const av = accessor(a) ?? ''
+    const bv = accessor(b) ?? ''
     if (av < bv) return sortDir === 'asc' ? -1 : 1
     if (av > bv) return sortDir === 'asc' ? 1 : -1
     return 0
   })
+
+  const getCellValue = (row: T, col: Column<T>) => {
+    if (col.render) return col.render(row)
+    if (col.accessor) return String(col.accessor(row) ?? '')
+    return String((row as Record<string, unknown>)[col.id] ?? '')
+  }
 
   return (
     <div className="overflow-x-auto -mx-4 md:mx-0">
@@ -43,13 +53,15 @@ export default function DataTable<T>({ columns, rows, keyExtractor, onRowClick }
           <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
             {columns.map((c) => (
               <th
-                key={c.key}
-                onClick={() => handleSort(c.key)}
-                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 cursor-pointer select-none whitespace-nowrap"
+                key={c.id}
+                onClick={() => c.sortable !== false && handleSort(c.id)}
+                className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 select-none whitespace-nowrap ${
+                  c.sortable !== false ? 'cursor-pointer' : ''
+                }`}
               >
                 <span className="inline-flex items-center gap-1">
                   {c.header}
-                  {sortKey === c.key ? (
+                  {sortKey === c.id ? (
                     sortDir === 'asc' ? (
                       <ChevronUp size={14} />
                     ) : (
@@ -75,8 +87,8 @@ export default function DataTable<T>({ columns, rows, keyExtractor, onRowClick }
               onClick={() => onRowClick?.(row)}
             >
               {columns.map((c) => (
-                <td key={c.key} className="px-4 py-3.5 text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                  {c.render ? c.render(row) : (row as any)[c.key]}
+                <td key={c.id} className="px-4 py-3.5 text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                  {getCellValue(row, c)}
                 </td>
               ))}
             </tr>
