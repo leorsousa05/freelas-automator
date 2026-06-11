@@ -5,12 +5,41 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class TokenData(BaseModel):
+    user_id: Optional[UUID] = None
+
+
+class UserCreate(BaseModel):
+    email: str
+    password: str
+
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    email: str
+    is_active: bool
+    created_at: datetime
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
 class AccountCreate(BaseModel):
+    platform: str = "99freelas"
     username: str
     password: str
 
 
 class AccountUpdate(BaseModel):
+    platform: Optional[str] = None
     username: Optional[str] = None
     password: Optional[str] = None
     is_active: Optional[bool] = None
@@ -19,6 +48,7 @@ class AccountUpdate(BaseModel):
 class AccountOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
+    platform: str
     username: str
     is_active: bool
     last_login_at: Optional[datetime]
@@ -45,10 +75,14 @@ class ProjectOut(BaseModel):
     client_name: Optional[str]
     client_avatar: Optional[str]
     client_rating: Optional[Decimal]
+    client_reviews_count: Optional[int]
     client_last_seen: Optional[str]
     visibility: Optional[str]
     published_at: Optional[str]
+    time_remaining: Optional[str]
     is_featured: bool
+    is_exclusive: bool
+    is_urgent: bool
     allows_multiple_freelancers: bool
     scraped_at: datetime
     cached_at: Optional[datetime]
@@ -146,6 +180,25 @@ class SendMessageResponse(BaseModel):
     external_id: str
     text: str
     sent_at: datetime
+
+
+class SubscriptionStatus(BaseModel):
+    has_subscription: bool
+    plan_name: Optional[str] = None
+
+
+class SendProposalRequest(BaseModel):
+    account_id: UUID
+    offer_value: str
+    final_value: str
+    duration_days: int
+    details: str
+
+
+class SendProposalResponse(BaseModel):
+    success: bool
+    proposal: Optional[ProposalOut] = None
+    error: Optional[str] = None
 
 
 class DashboardStats(BaseModel):

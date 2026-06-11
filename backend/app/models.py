@@ -5,16 +5,27 @@ from sqlalchemy.dialects.postgresql import UUID
 from app.database import Base
 
 
+class User(Base):
+    __tablename__ = "users"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email = Column(String, unique=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class Account(Base):
     __tablename__ = "accounts"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    username = Column(String, unique=True, nullable=False)
+    platform = Column(String, default="99freelas", nullable=False)
+    username = Column(String, nullable=False)
     password_encrypted = Column(String, nullable=False)
     session_cookies = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     last_login_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    __table_args__ = (UniqueConstraint("username", "platform", name="uq_account_username_platform"),)
 
 
 class Project(Base):
@@ -38,10 +49,14 @@ class Project(Base):
     client_name = Column(String, nullable=True)
     client_avatar = Column(String, nullable=True)
     client_rating = Column(Numeric(3, 2), nullable=True)
+    client_reviews_count = Column(Integer, nullable=True)
     client_last_seen = Column(String, nullable=True)
     visibility = Column(String, nullable=True)
     published_at = Column(String, nullable=True)
+    time_remaining = Column(String, nullable=True)
     is_featured = Column(Boolean, default=False)
+    is_exclusive = Column(Boolean, default=False)
+    is_urgent = Column(Boolean, default=False)
     allows_multiple_freelancers = Column(Boolean, default=False)
     scraped_at = Column(DateTime, default=datetime.utcnow)
     cached_at = Column(DateTime, nullable=True)

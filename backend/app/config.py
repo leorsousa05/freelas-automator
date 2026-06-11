@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     scheduler_interval_minutes: int = 15
     max_workers: int = 5
     playwright_headless: bool = True
+    jwt_secret_key: str = "change-me-in-production"
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 30
 
     class Config:
         env_file = ".env"
